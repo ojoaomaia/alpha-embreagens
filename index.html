@@ -70,9 +70,12 @@ section{padding:72px 0}
 .no-js .anim-ctrl{display:none}
 .no-js .bar,.no-js .preview,.no-js .preview-t,.no-js .route{display:none}
 .stage canvas{width:100%;height:100%;object-fit:cover;object-position:50% 0}
-.anim-ctrl{position:absolute;right:14px;top:74px;z-index:3;display:flex;gap:6px}
-.replay{white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.75);background:rgba(10,10,12,.55);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:7px 12px;cursor:pointer}
-.replay:hover{color:var(--yel);border-color:var(--yel)}
+.anim-ctrl{position:absolute;right:12px;top:72px;z-index:3}
+.replay{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;line-height:1;color:#fff;opacity:.7;background:rgba(10,10,12,.45);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:7px 11px;cursor:pointer;transition:opacity .2s ease,border-color .2s ease}
+.replay svg{width:12px;height:12px}
+.js .hero-copy{transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
+.js .hero.intro .hero-copy{opacity:0;transform:translateY(36px);pointer-events:none}
+.replay:hover,.replay:focus-visible{opacity:1;border-color:var(--yel)}
 .hero-copy{position:relative;z-index:2;padding:64px 0 22px;background:linear-gradient(to top,var(--bg) 0%,var(--bg) 64%,rgba(10,10,12,.8) 84%,rgba(10,10,12,0) 100%)}
 .hero .chips{display:none}
 .hero .btn{white-space:nowrap;font-size:16px;padding:14px 18px}
@@ -251,7 +254,7 @@ footer p{line-height:1.7}
     -webkit-mask-image:radial-gradient(75% 62% at 50% 44%,#000 62%,transparent 100%);mask-image:radial-gradient(75% 62% at 50% 44%,#000 62%,transparent 100%)}
   .stage canvas{object-fit:contain}
   .stage{background-size:contain;background-position:50% 50%}
-  .anim-ctrl{top:auto;bottom:40px;right:auto;left:50%;transform:translateX(-50%)}
+  .anim-ctrl{top:24px;right:24px}
   .hero .sub{font-size:19px;margin:16px 0 24px}
   .hero .chips{display:flex}
   .hero-micro{text-align:left}
@@ -283,10 +286,10 @@ footer p{line-height:1.7}
 </header>
 
 <main id="inicio">
-<section class="hero" aria-labelledby="h1">
+<section class="hero" id="hero" aria-labelledby="h1">
   <div class="stage">
     <canvas id="c" width="1080" height="1920" role="img" aria-label="Animação em holograma de uma embreagem Alpha sendo desmontada em platô, disco e rolamento, inspecionada e montada de novo como peça real"></canvas>
-    <div class="anim-ctrl"><button class="replay" id="replay" type="button" aria-label="Ver a animação de novo">↻ Ver de novo</button><button class="replay" id="pausebtn" type="button" aria-label="Pausar ou continuar a animação" aria-pressed="false">❚❚ Pausar</button></div>
+    <div class="anim-ctrl"><button class="replay" id="replay" type="button" aria-label="Ver a animação de novo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Ver de novo</button></div>
   </div>
   <div class="hero-copy">
     <div class="wrap" style="padding:0 20px">
@@ -634,6 +637,8 @@ if('IntersectionObserver' in window){
 
 /* ===== Animação do holograma (mesma do vídeo) ===== */
 const W=1080,H=1920,DUR=25,FPS=30,BEAT=0.5,RED='#ff2f2a',YEL='#ffd21f';
+/* abertura no celular: 2 s só do scanner, depois o texto sobe */
+(function(){const hero=document.getElementById('hero');if(matchMedia('(min-width:960px)').matches||scrollY>40)return;hero.classList.add('intro');const end=()=>hero.classList.remove('intro');setTimeout(end,2000);addEventListener('scroll',end,{once:true,passive:true});addEventListener('touchstart',end,{once:true,passive:true})})();
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 const logoImg=document.getElementById('logo');
 const DESK=matchMedia('(min-width:960px)').matches;
@@ -1215,7 +1220,6 @@ function render(t){
 (function(){
   const LOOP=19;let start=performance.now(),last=0,running=false,userPaused=false,visible=true,pausedAt=performance.now(),raf=0,avg=20,gap=33,errs=0;
   const map=tl=>tl<=14.6?tl:14.6+(tl-14.6)*0.085;
-  const pb=document.getElementById('pausebtn');
   function frame(now){
     if(!running)return;
     raf=requestAnimationFrame(frame);
@@ -1230,13 +1234,11 @@ function render(t){
     const should=!userPaused&&visible&&!document.hidden;
     if(should&&!running){running=true;start+=performance.now()-pausedAt;last=0;raf=requestAnimationFrame(frame)}
     else if(!should&&running){running=false;pausedAt=performance.now();cancelAnimationFrame(raf)}
-    pb.textContent=userPaused?'▶ Animar':'❚❚ Pausar';pb.setAttribute('aria-pressed',userPaused?'true':'false');
   }
   let started=false;
   const go=()=>{if(started)return;started=true;try{render(0.9)}catch(e){};start=performance.now();pausedAt=start;sync()};
   Promise.race([Promise.all([document.fonts.load("900 40px Mont"),document.fonts.load("800 40px Mont"),document.fonts.load("600 40px Mont")]),new Promise(r=>setTimeout(r,1500))]).catch(()=>{}).then(go);
   document.getElementById('replay').addEventListener('click',()=>{start=performance.now();pausedAt=start;userPaused=false;sync()});
-  pb.addEventListener('click',()=>{userPaused=!userPaused;sync()});
   if('IntersectionObserver' in window)new IntersectionObserver(es=>es.forEach(e=>{visible=e.isIntersecting;if(started)sync()})).observe(cv);
   document.addEventListener('visibilitychange',()=>{if(started)sync()});
 })();
